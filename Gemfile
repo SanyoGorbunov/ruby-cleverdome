@@ -37,6 +37,8 @@ gem 'savon', '~> 2.0'
 
 gem 'signed_xml'
 
+gem 'mime-types'
+
 group :doc do
   # bundle exec rake doc:rails generates the API under doc/api.
   gem 'sdoc', require: false
