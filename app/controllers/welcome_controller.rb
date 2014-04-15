@@ -1,11 +1,10 @@
 require 'ruby-cleverdome'
-require 'ruby-cleverdome/multipart'
 
 class WelcomeController < ApplicationController
 	def index
 		client = RubyCleverdome::Client.new(
-			'http://win7dev6.unitedplanners.com/CDSSOService/SSOService.svc/SSO',
-			'http://win7dev6.unitedplanners.com/CDWidgets/Services/Widgets.svc'
+			'http://sandbox.cleverdome.com/CDSSOService/SSOService.svc/SSO',
+			'http://sandbox.cleverdome.com/CDWidgets/Services/Widgets.svc'
 			)
 
 		path = Dir.pwd + '/cert/certificate.pem'
