@@ -141,6 +141,48 @@ module RubyCleverdome
 	  		check_body(resp_doc)
 	  	end
 
+	  	def get_document_tags(session_id, doc_guid)
+	  		resp_doc = widgets_call(
+	  			:get_document_tags,
+	  			{
+	  				'sessionID' => session_id,
+	  				'documentGuid' => doc_guid
+	  			}).doc
+
+	  		check_body(resp_doc)
+
+	  		hash = resp_doc.xpath('//ReturnValue')[0]
+	  			.element_children.each_with_object(Hash.new) do |e, h|
+	  			h[Integer(e.at('ID').content)] = e.at('Name').content
+	  		end
+
+	  		hash
+	  	end
+
+	  	def add_document_tag(session_id, doc_guid, tag_text)
+	  		resp_doc = widgets_call(
+	  			:add_document_tag,
+	  			{
+	  				'sessionID' => session_id,
+	  				'documentGuid' => doc_guid,
+	  				'tagName' => tag_text
+	  			}).doc
+
+	  		check_body(resp_doc)
+	  	end
+
+	  	def remove_document_tag(session_id, doc_guid, tag_id)
+			resp_doc = widgets_call(
+	  			:remove_document_tag,
+	  			{
+	  				'sessionID' => session_id,
+	  				'documentGuid' => doc_guid,
+	  				'tagID' => tag_id
+	  			}).doc
+
+	  		check_body(resp_doc)
+	  	end
+
 		def create_request(provider, uid)
 			builder = Nokogiri::XML::Builder.new do |xml|
 				xml['s'].Envelope('xmlns:s' => 'http://schemas.xmlsoap.org/soap/envelope/') {
