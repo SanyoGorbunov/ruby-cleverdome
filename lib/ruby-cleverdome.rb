@@ -14,12 +14,12 @@ module RubyCleverdome
 			@sso_client = Savon.client(
 	  			endpoint: sso_endpoint,
 	  			namespace: 'urn:up-us:sso-service:service:v1',
-				proxy: 'http://127.0.0.1:8888',
+				# proxy: 'http://127.0.0.1:8888',
 				# log_level: :debug
 	  			)
 			@widgets_client = Savon.client(
 				wsdl: widgets_path + '?wsdl',
-				proxy: 'http://127.0.0.1:8888',
+				# proxy: 'http://127.0.0.1:8888',
 				element_form_default: :unqualified,
 				# log_level: :debug
 			)
@@ -43,7 +43,7 @@ module RubyCleverdome
 	  		response = @widgets_client.call(
 				method,
 				:attributes => { 'xmlns' => 'http://tempuri.org/' }, 
-				message: { sessionID: 'EE282ABB-7BC3-42D3-BE98-9F8CE4217A12' } .merge(locals)
+				message: locals
 				)
 	  	end
 
@@ -63,6 +63,82 @@ module RubyCleverdome
 	  				inputStream: Base64.encode64(data)
 	  				})
 	  		response.body[:upload_file_response][:upload_file_result]
+	  	end
+
+	  	def get_templates(session_id, app_id)
+	  		resp_doc = widgets_call(
+	  			:get_document_templates,
+	  			{
+	  				'sessionID' => session_id,
+	  				'applicationID' => app_id
+	  			}).doc
+
+	  		check_body(resp_doc)
+
+	  		hash = resp_doc.xpath('//ReturnValue')[0]
+	  			.element_children.each_with_object(Hash.new) do |e, h|
+	  			h[Integer(e.at('ID').content)] = e.at('Name').content
+	  		end
+
+	  		hash
+	  	end
+
+	  	def get_document_template(session_id, doc_guid)
+	  		resp_doc = widgets_call(
+	  			:get_document_template,
+	  			{
+	  				'sessionID' => session_id,
+	  				'documentGuid' => doc_guid
+	  			}).doc
+
+	  		check_body(resp_doc)
+
+	  		return [Integer(resp_doc.xpath('//ReturnValue/ID')[0].content), resp_doc.xpath('//ReturnValue/Name')[0].content]
+	  	end
+
+	  	def get_template_types(session_id, app_id, template_id)
+	  		resp_doc = widgets_call(
+	  			:get_document_types,
+	  			{
+					'sessionID' => session_id,
+	  				'templateID' => template_id,
+	  				'applicationID' => app_id
+  				}).doc
+
+	  		check_body(resp_doc)
+
+	  		hash = resp_doc.xpath('//ReturnValue')[0]
+	  			.element_children.each_with_object(Hash.new) do |e, h|
+	  			h[Integer(e.at('ID').content)] = e.at('Name').content
+	  		end
+
+	  		hash
+	  	end
+
+	  	def get_document_type(session_id, doc_guid)
+	  		resp_doc = widgets_call(
+	  			:get_document_type,
+	  			{
+	  				'sessionID' => session_id,
+	  				'documentGuid' => doc_guid
+	  			}).doc
+
+	  		check_body(resp_doc)
+
+	  		return [Integer(resp_doc.xpath('//ReturnValue/ID')[0].content), resp_doc.xpath('//ReturnValue/Name')[0].content]
+	  	end
+
+	  	def set_document_template_type(session_id, doc_guid, template_id, type_id)
+	  		resp_doc = widgets_call(
+	  			:set_document_template,
+	  			{
+					'sessionID' => session_id,
+	  				'documentGuid' => doc_guid,
+	  				'templateID' => template_id,
+	  				'documentTypeID' => type_id
+  				}).doc
+
+	  		check_body(resp_doc)
 	  	end
 
 		def create_request(provider, uid)
@@ -143,6 +219,15 @@ module RubyCleverdome
 	  		end
 	  	end
 
-		private :create_request, :sign_request, :saml_call, :check_resp
+	  	def check_body(resp)
+	  		resp.remove_namespaces!
+	  		status = resp.xpath('//Result')[0].content
+
+	  		if status.casecmp('success') != 0
+	  			raise resp.xpath('//Message')[0].content
+	  		end
+	  	end
+
+		private :create_request, :sign_request, :saml_call, :check_resp, :check_body
 	end
 end
