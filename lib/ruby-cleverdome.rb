@@ -14,12 +14,12 @@ module RubyCleverdome
 			@sso_client = Savon.client(
 	  			endpoint: sso_endpoint,
 	  			namespace: 'urn:up-us:sso-service:service:v1',
-				# proxy: 'http://127.0.0.1:8888',
+				#proxy: 'http://127.0.0.1:8888',
 				# log_level: :debug
 	  			)
 			@widgets_client = Savon.client(
 				wsdl: widgets_path + '?wsdl',
-				# proxy: 'http://127.0.0.1:8888',
+				#proxy: 'http://127.0.0.1:8888',
 				element_form_default: :unqualified,
 				# log_level: :debug
 			)
@@ -50,7 +50,25 @@ module RubyCleverdome
 	  	def upload_file(session_id, app_id, file_path)
 	  		data, headers = Multipart::Post.prepare_query(
 	  			"sessionID" 	=> session_id,
-	  			"file" 			=> File.open(file_path),
+	  			"file" 			=> File.open(file_path, 'rb'),
+	  			'applicationID' => app_id
+	  			)
+
+	  		response = @widgets_client.call(
+	  			:upload_file,
+	  			:attributes => {
+	  				'xmlns' => 'http://tempuri.org/'
+	  				},
+	  			message: {
+	  				inputStream: Base64.encode64(data)
+	  				})
+	  		response.body[:upload_file_response][:upload_file_result]
+	  	end
+
+	  	def upload_file_binary(session_id, app_id, filename, binary_data)
+	  		data, headers = Multipart::Post.prepare_query(
+	  			"sessionID" 	=> session_id,
+	  			"file" 			=> { 'filename' => filename, 'data' => binary_data },
 	  			'applicationID' => app_id
 	  			)
 

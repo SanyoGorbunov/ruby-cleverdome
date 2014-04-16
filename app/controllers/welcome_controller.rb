@@ -10,10 +10,17 @@ class WelcomeController < ApplicationController
 		path = Dir.pwd + '/cert/certificate.pem'
 
 		session_id = client.auth('http://tempuri.org/', 4898, path, path)
-		doc_guid = '00f3fb8e-5f49-e311-952f-001d093226d7'
-		app_id = 5
 
-		hash_templates = client.get_templates(session_id, app_id)
+		content = ''
+		File.open('C:/Users/agorbunov/Downloads/Light-01.jpg', 'rb') { |file| content = file.read }
+
+		doc_guid = client.upload_file_binary(session_id, 8, 'Light-01.jpg', content)
+
+		client.add_document_tag(session_id, doc_guid, 'Tag Text 1')
+		client.add_document_tag(session_id, doc_guid, 'Tag Text 2')
+		client.add_document_tag(session_id, doc_guid, 'Tag Text 3')
+
 		hash_tags = client.get_document_tags(session_id, doc_guid)
+		render text: hash_tags.inspect
 	end
 end

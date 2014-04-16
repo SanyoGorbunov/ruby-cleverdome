@@ -31,6 +31,8 @@ module Multipart
         # Are we trying to make a file parameter?
         if v.respond_to?(:path) and v.respond_to?(:read) then
           fp.push(FileParam.new(k, v.path, v.read))
+        elsif v.is_a?(Hash) and v.has_key?('filename') and v.has_key?('data') then
+          fp.push(FileParam.new(k, v['filename'], v['data']))
         # We must be trying to make a regular parameter
         else
           fp.push(StringParam.new(k, v))
@@ -38,7 +40,7 @@ module Multipart
       end
 
       # Assemble the request body using the special multipart format
-      query = fp.collect {|p| "--" + BOUNDARY + "\r\n" + p.to_multipart }.join("") + "--" + BOUNDARY + "--"
+      query = (fp.collect {|p| "--" + BOUNDARY + "\r\n" + p.to_multipart }.join("") + "--" + BOUNDARY + "--")
       return query, HEADER
     end
   end
