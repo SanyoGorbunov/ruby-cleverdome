@@ -4,6 +4,7 @@ require 'uuid'
 require 'signed_xml'
 require 'mime/types'
 require 'ruby-cleverdome/multipart'
+require 'ruby-cleverdome/types'
 require 'base64'
 
 module RubyCleverdome
@@ -15,12 +16,14 @@ module RubyCleverdome
 	  			endpoint: sso_endpoint,
 	  			namespace: 'urn:up-us:sso-service:service:v1',
 				#proxy: 'http://127.0.0.1:8888',
+				# logger: Rails.logger
 				# log_level: :debug
 	  			)
 			@widgets_client = Savon.client(
 				wsdl: widgets_path + '?wsdl',
 				#proxy: 'http://127.0.0.1:8888',
 				element_form_default: :unqualified,
+				# logger: Rails.logger
 				# log_level: :debug
 			)
 		end
@@ -45,6 +48,10 @@ module RubyCleverdome
 				:attributes => { 'xmlns' => 'http://tempuri.org/' }, 
 				message: locals
 				)
+	  	end
+
+	  	def operations
+	  		@widgets_client.operations
 	  	end
 
 	  	def upload_file(session_id, app_id, file_path)
@@ -199,6 +206,159 @@ module RubyCleverdome
 	  			}).doc
 
 	  		check_body(resp_doc)
+	  	end
+
+	  	def get_security_groups(session_id, doc_guid)
+	  		resp_doc = widgets_call(
+	  			:get_security_groups,
+	  			{
+	  				'sessionID' => session_id,
+	  				'documentGuid' => doc_guid
+  				}).doc
+
+	  		check_body(resp_doc)
+
+			list = Array.new
+			resp_doc.xpath('//ReturnValue/SecurityGroup').each do |sg|
+				list.push(RubyCleverdome::SecurityGroup.from_xml sg)
+			end
+
+			list
+	  	end
+
+	  	def get_group_permissions(session_id, doc_guid, group_id)
+	  		resp_doc = widgets_call(
+	  			:get_group_permissions,
+	  			{
+	  				'sessionID' => session_id,
+	  				'documentGuid' => doc_guid,
+	  				'groupID' => group_id
+  				}).doc
+
+	  		check_body(resp_doc)
+
+			list = Array.new
+			resp_doc.xpath('//ReturnValue/PermissionData').each do |sg|
+				list.push(RubyCleverdome::PermissionData.new({
+					'id' => sg.at('ID'),
+					'name' => sg.at('Name'),
+					'allowed' => sg.at('Allowed')}))
+			end
+
+			list
+	  	end
+
+	  	def append_security_group(session_id, doc_guid, group_id)
+	  		resp_doc = widgets_call(
+	  			:append_security_group_to_document,
+	  			{
+	  				'sessionID' => session_id,
+	  				'documentGuid' => doc_guid,
+	  				'groupID' => group_id
+  				}).doc
+
+	  		check_body(resp_doc)	  		
+	  	end
+
+	  	def remove_security_group(session_id, doc_guid, group_id)
+	  		resp_doc = widgets_call(
+	  			:remove_security_group_from_document,
+	  			{
+	  				'sessionID' => session_id,
+	  				'documentGuid' => doc_guid,
+	  				'securityGroupID' => group_id
+  				}).doc
+
+	  		check_body(resp_doc)	  		
+	  	end
+
+	  	def set_security_group_permission(session_id, doc_guid, group_id, permission_id, permission_value)
+			resp_doc = widgets_call(
+	  			:set_permission_for_group,
+	  			{
+	  				'sessionID' => session_id,
+	  				'documentGuid' => doc_guid,
+	  				'groupID' => group_id,
+	  				'permissionID' => permission_id,
+	  				'permissionValue' => permission_value
+  				}).doc
+
+	  		check_body(resp_doc)
+	  	end
+
+	  	def add_user_to_security_group(session_id, group_id, user_id)
+	  		resp_doc = widgets_call(
+	  			:add_user_to_security_group,
+	  			{
+	  				'sessionID' => session_id,
+	  				'groupID' => group_id,
+	  				'userID' => user_id
+  				}).doc
+
+	  		check_body(resp_doc)
+	  	end
+
+	  	def remove_user_from_security_group(session_id, group_id, user_id)
+	  		resp_doc = widgets_call(
+	  			:remove_user_from_security_group,
+	  			{
+	  				'sessionID' => session_id,
+	  				'groupID' => group_id,
+	  				'userID' => user_id
+  				}).doc
+
+	  		check_body(resp_doc)
+	  	end
+
+	  	def create_security_group(session_id, name, desc, type_id, owner_id)
+	  		resp_doc = widgets_call(
+	  			:create_security_group,
+	  			{
+	  				'sessionID' => session_id,
+	  				'name' => name,
+	  				'description' => desc,
+	  				'type' => type_id,
+	  				'ownerID' => owner_id
+  				}).doc
+
+	  		check_body(resp_doc)
+
+	  		RubyCleverdome::SecurityGroup.from_xml resp_doc.xpath('//ReturnValue/SecurityGroup')  		
+	  	end
+
+	  	def get_security_group_users(session_id, group_id)
+	  		resp_doc = widgets_call(
+	  			:get_users_for_group,
+	  			{
+	  				'sessionID' => session_id,
+	  				'groupID' => group_id
+  				}).doc
+
+	  		check_body(resp_doc)
+
+			list = Array.new
+			resp_doc.xpath('//ReturnValue/UserData').each do |ud|
+				list.push(RubyCleverdome::UserData.from_xml ud)
+			end
+
+			list
+	  	end
+
+	  	def get_security_group_types(session_id)
+	  		resp_doc = widgets_call(
+	  			:get_security_group_types,
+	  			{
+	  				'sessionID' => session_id
+  				}).doc
+
+	  		check_body(resp_doc)
+
+			list = Array.new
+			resp_doc.xpath('//ReturnValue/SecurityGroupType').each do |sgt|
+				list.push(RubyCleverdome::SecurityGroupType.from_xml sgt)
+			end
+
+			list
 	  	end
 
 		def create_request(provider, uid)

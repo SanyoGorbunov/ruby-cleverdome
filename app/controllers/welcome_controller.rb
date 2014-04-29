@@ -1,26 +1,42 @@
 require 'ruby-cleverdome'
+require 'ruby-cleverdome/types'
 
 class WelcomeController < ApplicationController
 	def index
 		client = RubyCleverdome::Client.new(
 			'http://sandbox.cleverdome.com/CDSSOService/SSOService.svc/SSO',
 			'http://sandbox.cleverdome.com/CDWidgets/Services/Widgets.svc'
+			#'http://win7dev6.unitedplanners.com/CDSSOService/SSOService.svc/SSO',
+			#'http://win7dev6.unitedplanners.com/CDWidgets/Services/Widgets.svc'
 			)
 
 		path = Dir.pwd + '/cert/certificate.pem'
 
 		session_id = client.auth('http://tempuri.org/', 4898, path, path)
 
-		content = ''
-		File.open('C:/Users/agorbunov/Downloads/Light-01.jpg', 'rb') { |file| content = file.read }
+=begin
+content = ''
+File.open('C:/Users/agorbunov/Downloads/Light-01.jpg', 'rb') { |file| content = file.read }
 
-		doc_guid = client.upload_file_binary(session_id, 8, 'Light-01.jpg', content)
+doc_guid = client.upload_file_binary(session_id, 8, 'Light-01.jpg', content)
 
-		client.add_document_tag(session_id, doc_guid, 'Tag Text 1')
-		client.add_document_tag(session_id, doc_guid, 'Tag Text 2')
-		client.add_document_tag(session_id, doc_guid, 'Tag Text 3')
+client.add_document_tag(session_id, doc_guid, 'Tag Text 1')
+client.add_document_tag(session_id, doc_guid, 'Tag Text 2')
+client.add_document_tag(session_id, doc_guid, 'Tag Text 3')
 
-		hash_tags = client.get_document_tags(session_id, doc_guid)
-		render text: hash_tags.inspect
+hash_tags = client.get_document_tags(session_id, doc_guid)
+render text: hash_tags.inspect
+=end
+
+		doc_guid = 'af5ba2a3-c3cd-11e3-bfc5-00155d09d70a'
+		#list = client.get_security_groups(session_id, doc_guid)
+		
+		#render text: client.operations.inspect
+
+		#render text: :get_group_permissions.to_s
+
+		list = client.get_security_group_types(session_id)
+
+		render text: list[1].name
 	end
 end
