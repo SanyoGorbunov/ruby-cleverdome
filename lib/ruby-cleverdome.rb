@@ -231,8 +231,8 @@ module RubyCleverdome
 	  			:get_group_permissions,
 	  			{
 	  				'sessionID' => session_id,
-	  				'documentGuid' => doc_guid,
-	  				'groupID' => group_id
+	  				'groupID' => group_id,
+	  				'documentGuid' => doc_guid
   				}).doc
 
 	  		check_body(resp_doc)
@@ -253,8 +253,8 @@ module RubyCleverdome
 	  			:append_security_group_to_document,
 	  			{
 	  				'sessionID' => session_id,
-	  				'documentGuid' => doc_guid,
-	  				'groupID' => group_id
+	  				'groupID' => group_id,
+	  				'documentGuid' => doc_guid
   				}).doc
 
 	  		check_body(resp_doc)	  		
@@ -277,10 +277,10 @@ module RubyCleverdome
 	  			:set_permission_for_group,
 	  			{
 	  				'sessionID' => session_id,
-	  				'documentGuid' => doc_guid,
-	  				'groupID' => group_id,
+					'groupID' => group_id,
 	  				'permissionID' => permission_id,
-	  				'permissionValue' => permission_value
+	  				'permissionValue' => permission_value,
+	  				'documentGuid' => doc_guid
   				}).doc
 
 	  		check_body(resp_doc)
