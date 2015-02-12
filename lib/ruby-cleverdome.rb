@@ -15,7 +15,7 @@ module RubyCleverdome
 			@sso_client = Savon.client(
 	  			endpoint: sso_endpoint,
 	  			namespace: 'urn:up-us:sso-service:service:v1',
-				#proxy: 'http://127.0.0.1:8888',
+				# proxy: 'http://127.0.0.1:8888',
 				# logger: Rails.logger
 				# log_level: :debug
 	  			)
@@ -32,6 +32,8 @@ module RubyCleverdome
 	  		req = create_request(provider, uid)
 
 			req = sign_request(req, private_key_file, certificate_file)
+
+			req = place_to_envelope(req)
 
 			resp = saml_call(req)
 			resp_doc = Nokogiri::XML::Document.parse(resp)
@@ -363,6 +365,63 @@ module RubyCleverdome
 
 		def create_request(provider, uid)
 			builder = Nokogiri::XML::Builder.new do |xml|
+				xml['samlp'].AuthnRequest(
+					'ID' 				=> '_' + UUID.new.generate,
+					'Version' 			=> '2.0',
+					'IssueInstant' 		=> Time.now.utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
+					'IsPassive'			=> false,
+					'ProtocolBinding' 	=> 'urn:oasis:names:tc:SAML:2.0:bindings:SOAP',
+					'ProviderName'		=> provider,
+					'xmlns:saml'		=> 'urn:oasis:names:tc:SAML:2.0:assertion',
+					'xmlns:xenc'		=> 'http://www.w3.org/2001/04/xmlenc#',
+					'xmlns:samlp'		=> 'urn:oasis:names:tc:SAML:2.0:protocol') {
+					xml['saml'].Issuer(
+						provider,
+						'Format'	=> 'urn:oasis:names:tc:SAML:2.0:nameid-format:transient')
+					xml.Signature(:xmlns => 'http://www.w3.org/2000/09/xmldsig#') {
+						xml.SignedInfo {
+							xml.CanonicalizationMethod( 'Algorithm' => 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315' ) { xml.text '' }
+							xml.SignatureMethod( 'Algorithm' => 'http://www.w3.org/2000/09/xmldsig#rsa-sha1' ) { xml.text '' }
+							xml.Reference( 'URI' => '' ) {
+								xml.Transforms {
+									xml.Transform( 'Algorithm' => 'http://www.w3.org/2000/09/xmldsig#enveloped-signature' ) { xml.text '' }
+									xml.Transform( 'Algorithm' => 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315' ) { xml.text '' }
+								}
+								xml.DigestMethod( 'Algorithm' => 'http://www.w3.org/2000/09/xmldsig#sha1' ) { xml.text '' }
+								xml.DigestValue
+							}
+						}
+						xml.SignatureValue
+						xml.KeyInfo {
+							xml.X509Data {
+								xml.X509Certificate
+							}
+						}
+					}
+					xml['saml'].Subject {
+						xml['saml'].NameID(
+							uid,
+							'Format'=>'urn:oasis:names:tc:SAML:2.0:nameid-format:transient')
+					}
+					xml['samlp'].NameIDPolicy( 'AllowCreate' => true )
+				}
+			end
+
+			builder.to_xml(:save_with => Nokogiri::XML::Node::SaveOptions::NO_DECLARATION)
+		end
+
+		def sign_request(xml, private_key_file, certificate_file)
+			doc = SignedXml::Document(xml)
+			private_key = OpenSSL::PKey::RSA.new(File.new private_key_file)
+			certificate = OpenSSL::X509::Certificate.new(File.read certificate_file)
+			doc.sign(private_key, certificate)
+			doc.to_xml
+		end
+
+		def place_to_envelope(xml)
+			authn_req_node = Nokogiri::XML(xml).root
+
+			builder = Nokogiri::XML::Builder.new do |xml|
 				xml['s'].Envelope('xmlns:s' => 'http://schemas.xmlsoap.org/soap/envelope/') {
 					xml['s'].Header {
 						xml.ActivityId(
@@ -372,59 +431,15 @@ module RubyCleverdome
 					}
 					xml['s'].Body(
 						'xmlns:xsi' => 'http://www.w3.org/2001/XMLSchema-instance',
-						'xmlns:xsd' => 'http://www.w3.org/2001/XMLSchema') {
-						xml.AuthnRequest(
-							'ID' 				=> '_' + UUID.new.generate,
-							'Version' 			=> '2.0',
-							'IssueInstant' 		=> Time.now.utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
-							'IsPassive'			=> false,
-							'ProtocolBinding' 	=> 'urn:oasis:names:tc:SAML:2.0:bindings:SOAP',
-							'ProviderName'		=> provider,
-							:xmlns 				=> 'urn:oasis:names:tc:SAML:2.0:protocol') {
-							xml.Issuer(
-								@provider,
-								'Format'	=> 'urn:oasis:names:tc:SAML:2.0:nameidformat:transient',
-								:xmlns 		=> 'urn:oasis:names:tc:SAML:2.0:assertion')
-							xml.Signature(:xmlns => 'http://www.w3.org/2000/09/xmldsig#') {
-								xml.SignedInfo {
-									xml.CanonicalizationMethod( 'Algorithm' => 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315' ) { xml.text '' }
-									xml.SignatureMethod( 'Algorithm' => 'http://www.w3.org/2000/09/xmldsig#rsa-sha1' ) { xml.text '' }
-									xml.Reference( 'URI' => '' ) {
-										xml.Transforms {
-											xml.Transform( 'Algorithm' => 'http://www.w3.org/2000/09/xmldsig#enveloped-signature' ) { xml.text '' }
-											xml.Transform( 'Algorithm' => 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315' ) { xml.text '' }
-										}
-										xml.DigestMethod( 'Algorithm' => 'http://www.w3.org/2000/09/xmldsig#sha1' ) { xml.text '' }
-										xml.DigestValue
-									}
-								}
-								xml.SignatureValue
-								xml.KeyInfo {
-									xml.X509Data {
-										xml.X509Certificate
-									}
-								}
-							}
-							xml.Subject( :xmlns => 'urn:oasis:names:tc:SAML:2.0:assertion' ) {
-								xml.NameID(
-									uid,
-									'Format'=>'urn:oasis:names:tc:SAML:2.0:nameid-format:transient')
-							}
-							xml.NameIDPolicy( 'AllowCreate' => true )
-						}
-					}
+						'xmlns:xsd' => 'http://www.w3.org/2001/XMLSchema')
 				}
 			end
 
-			builder.to_xml
-		end
+			req_doc = builder.doc
+			body = req_doc.xpath('//s:Body', 's' => 'http://schemas.xmlsoap.org/soap/envelope/')[0]
+			body.add_child authn_req_node
 
-		def sign_request(xml, private_key_file, certificate_file)
-			doc = SignedXml::Document(xml)
-			private_key = OpenSSL::PKey::RSA.new(File.new private_key_file)
-			certificate = OpenSSL::X509::Certificate.new(File.read certificate_file)
-			doc.sign(private_key, certificate)
-			doc.to_xml
+			req_doc.to_xml
 		end
 
 	  	def saml_call(req)
