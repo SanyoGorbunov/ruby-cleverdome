@@ -6,7 +6,7 @@ Gem::Specification.new do |s|
   s.description = "Ruby client to access CleverDome."
   s.authors     = ["Alex Gorbunov"]
   s.email       = 'sanyo.gorbunov@gmail.com'
-  s.files       = ["lib/ruby-cleverdome.rb", "lib/ruby-cleverdome/multipart.rb", "lib/ruby-cleverdome/types.rb"]
+  s.files       = ["lib/ruby-cleverdome.rb", "lib/ruby-cleverdome/multipart.rb", "lib/ruby-cleverdome/types.rb", "lib/ruby-cleverdome/config.rb"]
   s.homepage    =
     'https://github.com/SanyoGorbunov/ruby-cleverdome/'
 

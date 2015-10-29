@@ -5,49 +5,54 @@ require 'signed_xml'
 require 'mime/types'
 require 'ruby-cleverdome/multipart'
 require 'ruby-cleverdome/types'
+require 'ruby-cleverdome/config'
 require 'base64'
 
 module RubyCleverdome
 	class Client
-		def initialize(sso_endpoint, widgets_path)
-			@widgets_path = widgets_path
+		def initialize()
+			@config = CleverDomeConfiguration::CDConfig.new()
+			@cert = File.expand_path(@config.cleverDomeCertFile, __FILE__)
+			init_auth_client()
+			init_widgets_client()
+		end
 
-			@sso_client = Savon.client(
-	  			endpoint: sso_endpoint,
-	  			namespace: 'urn:up-us:sso-service:service:v1',
-				# proxy: 'http://127.0.0.1:8888',
-				# logger: Rails.logger
-				# log_level: :debug
-	  			)
-			@widgets_client = Savon.client(
-				wsdl: widgets_path + '?wsdl',
+		def init_auth_client()
+			@auth_client = Savon.client(
+				wsdl: 'http://' + @config.authServicePath + '?wsdl',
+				endpoint: 'https://' + @config.authServicePath,
+				namespace: 'http://cleverdome.com/apikeys',
+				ssl_ca_cert_file: @cert,
+				ssl_verify_mode: :none,
 				#proxy: 'http://127.0.0.1:8888',
-				element_form_default: :unqualified,
-				# logger: Rails.logger
-				# log_level: :debug
 			)
 		end
 
-	  	def auth(provider, uid, private_key_file, certificate_file)
-	  		req = create_request(provider, uid)
+		def init_widgets_client()
+			@widgets_client = Savon.client(
+				wsdl: 'http://' + @config.widgetsServicePath + '?wsdl',
+				endpoint: 'https://' + @config.widgetsServicePath + '/basic',
+				namespace: 'http://tempuri.org/',
+				ssl_ca_cert_file: @cert,
+				#ssl_verify_mode: :none
+				#proxy: 'http://127.0.0.1:8888',
+			)
+		end
 
-			req = sign_request(req, private_key_file, certificate_file)
+		def auth(api_key, user_id)
+			responseMessage = auth_call(api_key, user_id).to_hash[:api_key_response_message]
 
-			req = place_to_envelope(req)
+			if !responseMessage[:is_success]
+				raise responseMessage[:error_message]
+			end
 
-			resp = saml_call(req)
-			resp_doc = Nokogiri::XML::Document.parse(resp)
-	  		resp_doc.remove_namespaces!
-			check_resp(resp_doc)
-
-			session_id = resp_doc.xpath('//Assertion//AttributeStatement//Attribute[@Name="SessionID"]//AttributeValue')[0].content
-			session_id
-	  	end
+			responseMessage[:session_id]
+		end
 
 		def widgets_call(method, locals)
 	  		response = @widgets_client.call(
 				method,
-				:attributes => { 'xmlns' => 'http://tempuri.org/' }, 
+				:attributes => { 'xmlns' => 'http://tempuri.org/' },
 				message: locals
 				)
 	  	end
@@ -363,87 +368,17 @@ module RubyCleverdome
 			list
 	  	end
 
-		def create_request(provider, uid)
-			builder = Nokogiri::XML::Builder.new do |xml|
-				xml['samlp'].AuthnRequest(
-					'ID' 				=> '_' + UUID.new.generate,
-					'Version' 			=> '2.0',
-					'IssueInstant' 		=> Time.now.utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
-					'IsPassive'			=> false,
-					'ProtocolBinding' 	=> 'urn:oasis:names:tc:SAML:2.0:bindings:SOAP',
-					'ProviderName'		=> provider,
-					'xmlns:saml'		=> 'urn:oasis:names:tc:SAML:2.0:assertion',
-					'xmlns:xenc'		=> 'http://www.w3.org/2001/04/xmlenc#',
-					'xmlns:samlp'		=> 'urn:oasis:names:tc:SAML:2.0:protocol') {
-					xml['saml'].Issuer(
-						provider,
-						'Format'	=> 'urn:oasis:names:tc:SAML:2.0:nameid-format:transient')
-					xml.Signature(:xmlns => 'http://www.w3.org/2000/09/xmldsig#') {
-						xml.SignedInfo {
-							xml.CanonicalizationMethod( 'Algorithm' => 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315' ) { xml.text '' }
-							xml.SignatureMethod( 'Algorithm' => 'http://www.w3.org/2000/09/xmldsig#rsa-sha1' ) { xml.text '' }
-							xml.Reference( 'URI' => '' ) {
-								xml.Transforms {
-									xml.Transform( 'Algorithm' => 'http://www.w3.org/2000/09/xmldsig#enveloped-signature' ) { xml.text '' }
-									xml.Transform( 'Algorithm' => 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315' ) { xml.text '' }
-								}
-								xml.DigestMethod( 'Algorithm' => 'http://www.w3.org/2000/09/xmldsig#sha1' ) { xml.text '' }
-								xml.DigestValue
-							}
+	  	def auth_call(api_key, user_id)
+				response = @auth_client.call(
+						:auth,
+						:attributes => { 'xmlns' => 'http://cleverdome.com/apikeys' },
+						message: {
+								'ApiKey' => api_key,
+								'UserID' => user_id
+								#'IpAddresses'
 						}
-						xml.SignatureValue
-						xml.KeyInfo {
-							xml.X509Data {
-								xml.X509Certificate
-							}
-						}
-					}
-					xml['saml'].Subject {
-						xml['saml'].NameID(
-							uid,
-							'Format'=>'urn:oasis:names:tc:SAML:2.0:nameid-format:transient')
-					}
-					xml['samlp'].NameIDPolicy( 'AllowCreate' => true )
-				}
-			end
+				)
 
-			builder.to_xml(:save_with => Nokogiri::XML::Node::SaveOptions::NO_DECLARATION)
-		end
-
-		def sign_request(xml, private_key_file, certificate_file)
-			doc = SignedXml::Document(xml)
-			private_key = OpenSSL::PKey::RSA.new(File.new private_key_file)
-			certificate = OpenSSL::X509::Certificate.new(File.read certificate_file)
-			doc.sign(private_key, certificate)
-			doc.to_xml
-		end
-
-		def place_to_envelope(xml)
-			authn_req_node = Nokogiri::XML(xml).root
-
-			builder = Nokogiri::XML::Builder.new do |xml|
-				xml['s'].Envelope('xmlns:s' => 'http://schemas.xmlsoap.org/soap/envelope/') {
-					xml['s'].Header {
-						xml.ActivityId(
-							UUID.new.generate, 
-							'CorrelationId' => UUID.new.generate,
-							:xmlns 			=> 'http://schemas.microsoft.com/2004/09/ServiceModel/Diagnostics')
-					}
-					xml['s'].Body(
-						'xmlns:xsi' => 'http://www.w3.org/2001/XMLSchema-instance',
-						'xmlns:xsd' => 'http://www.w3.org/2001/XMLSchema')
-				}
-			end
-
-			req_doc = builder.doc
-			body = req_doc.xpath('//s:Body', 's' => 'http://schemas.xmlsoap.org/soap/envelope/')[0]
-			body.add_child authn_req_node
-
-			req_doc.to_xml
-		end
-
-	  	def saml_call(req)
-	  		@sso_client.call( 'GetSSO', soap_action: 'urn:up-us:sso-service:service:v1/ISSOService/GetSSO', xml: req ).to_xml
 	  	end
 
 	  	def check_resp(resp_doc)
@@ -463,6 +398,6 @@ module RubyCleverdome
 	  		end
 	  	end
 
-		private :create_request, :sign_request, :saml_call, :check_resp, :check_body
+		private :auth_call, :check_resp, :check_body, :init_auth_client, :init_widgets_client
 	end
 end

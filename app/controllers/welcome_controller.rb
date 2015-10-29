@@ -3,16 +3,11 @@ require 'ruby-cleverdome/types'
 
 class WelcomeController < ApplicationController
 	def index
-		client = RubyCleverdome::Client.new(
-			'http://sandbox.cleverdome.com/CDSSOService/SSOService.svc/SSO',
-			'http://sandbox.cleverdome.com/CDWidgets/Services/Widgets.svc'
-			#'http://win7dev6.unitedplanners.com/CDSSOService/SSOService.svc/SSO',
-			#'http://win7dev6.unitedplanners.com/CDWidgets/Services/Widgets.svc'
-			)
+		client = RubyCleverdome::Client.new()
 
-		path = Dir.pwd + '/cert/certificate.pem'
-
-		session_id = client.auth('http://tempuri.org/', 4898, path, path)
+		api_key = '=BKH^a-TMM$b9(bN(;(R!wQ2G&iwoQBycLP.Cq(z1Zfm/Ay[}K2b1%b[-mn=V5Bi|G^9wv5qXjz:FK&oy+/xJ$}v$>5-s#6{xVaeF6B:s%2%_^e][CxE3Sl!HI-fLuV:'
+		user_id = 'TestSSO'
+		session_id = client.auth(api_key, user_id)
 
 =begin
 content = ''
