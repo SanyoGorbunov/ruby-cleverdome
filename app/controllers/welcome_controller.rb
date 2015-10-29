@@ -3,35 +3,47 @@ require 'ruby-cleverdome/types'
 
 class WelcomeController < ApplicationController
 	def index
-		client = RubyCleverdome::Client.new()
+		@output = ''
 
-		api_key = '=BKH^a-TMM$b9(bN(;(R!wQ2G&iwoQBycLP.Cq(z1Zfm/Ay[}K2b1%b[-mn=V5Bi|G^9wv5qXjz:FK&oy+/xJ$}v$>5-s#6{xVaeF6B:s%2%_^e][CxE3Sl!HI-fLuV:'
-		user_id = 'TestSSO'
-		session_id = client.auth(api_key, user_id)
+		config = CleverDomeConfiguration::CDConfig.new()
+		client = RubyCleverdome::Client.new(config)
 
-=begin
-content = ''
-File.open('C:/Users/agorbunov/Downloads/Light-01.jpg', 'rb') { |file| content = file.read }
+		api_key = config.apiKey
+		user_id = config.testUserID
+		@session_id = client.auth(api_key, user_id)
+		log('session_id retrieved: ' + @session_id)
 
-doc_guid = client.upload_file_binary(session_id, 8, 'Light-01.jpg', content)
+		doc_guid = upload_file(client, config)
+		add_tags(client, doc_guid)
 
-client.add_document_tag(session_id, doc_guid, 'Tag Text 1')
-client.add_document_tag(session_id, doc_guid, 'Tag Text 2')
-client.add_document_tag(session_id, doc_guid, 'Tag Text 3')
+		list = client.get_security_group_types(@session_id)
 
-hash_tags = client.get_document_tags(session_id, doc_guid)
-render text: hash_tags.inspect
-=end
+		log('security group types retrieved: ' + list[1].name)
+		render text: @output
+	end
 
-		doc_guid = 'af5ba2a3-c3cd-11e3-bfc5-00155d09d70a'
-		#list = client.get_security_groups(session_id, doc_guid)
-		
-		#render text: client.operations.inspect
+	def upload_file(client, config)
+		file_path = File.expand_path('../../../files/TestFile.jpeg', __FILE__)
+		content = ''
+		File.open(file_path, 'rb') { |file| content = file.read }
 
-		#render text: :get_group_permissions.to_s
+		doc_guid = client.upload_file_binary(@session_id, config.applicationID, 'TestFile.jpeg', content)
+		log('document uploaded: ' + doc_guid)
 
-		list = client.get_security_group_types(session_id)
+		doc_guid
+	end
 
-		render text: list[1].name
+	def add_tags(client, doc_guid)
+		client.add_document_tag(@session_id, doc_guid, 'Tag Text 1')
+		client.add_document_tag(@session_id, doc_guid, 'Tag Text 2')
+		client.add_document_tag(@session_id, doc_guid, 'Tag Text 3')
+		log('tags added')
+
+		hash_tags = client.get_document_tags(@session_id, doc_guid)
+		log('document tags: ' + hash_tags.inspect)
+	end
+
+	def log(text)
+		@output += text + '<br/>'
 	end
 end

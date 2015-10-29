@@ -10,8 +10,8 @@ require 'base64'
 
 module RubyCleverdome
 	class Client
-		def initialize()
-			@config = CleverDomeConfiguration::CDConfig.new()
+		def initialize(config)
+			@config = config
 			@cert = File.expand_path(@config.cleverDomeCertFile, __FILE__)
 			init_auth_client()
 			init_widgets_client()
@@ -23,7 +23,7 @@ module RubyCleverdome
 				endpoint: 'https://' + @config.authServicePath,
 				namespace: 'http://cleverdome.com/apikeys',
 				ssl_ca_cert_file: @cert,
-				ssl_verify_mode: :none,
+				#ssl_verify_mode: :none,
 				#proxy: 'http://127.0.0.1:8888',
 			)
 		end
