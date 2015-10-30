@@ -51,4 +51,34 @@ module RubyCleverdome
 
 		attr_accessor :id, :name		
 	end
+
+  class ExternalUser
+		def initialize params = {}
+			params.each { |key, value| send "#{key}=", value }
+		end
+
+		attr_accessor :id, :first_name, :last_name, :primary_email, :phone_number
+	end
+
+  class User_Email
+		def self.from_xml ue
+			portal_xmlns = 'http://schemas.datacontract.org/2004/07/PortalManagement'
+			email = User_Email.new({
+				'id' => ue.at('./portal:ID', 'portal'=> portal_xmlns).content,
+				'email' => ue.at('./portal:Email', 'portal'=> portal_xmlns).content,
+				'active' => ue.at('./portal:Active', 'portal'=> portal_xmlns).content,
+				'is_primary' => ue.at('./portal:IsPrimary', 'portal'=> portal_xmlns).content,
+			})
+		end
+
+		def initialize params = {}
+			params.each { |key, value| send "#{key}=", value }
+		end
+
+		def inspect
+			'{id: %s, email: %s, active: %s, is_primary: %s}' % [@id, @email, @active, @is_primary]
+		end
+
+		attr_accessor :active, :email, :id, :is_primary
+	end
 end
