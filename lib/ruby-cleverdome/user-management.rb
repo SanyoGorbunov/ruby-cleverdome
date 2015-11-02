@@ -4,6 +4,7 @@ require 'uuid'
 require 'signed_xml'
 require 'mime/types'
 require 'ruby-cleverdome/types'
+require 'ruby-cleverdome/serialization'
 
 module RubyCleverdome
   class UserManagementClient
@@ -46,7 +47,7 @@ module RubyCleverdome
         'externalUserID' => external_user_id
       }).doc
 
-      portal_xmlns = 'http://schemas.datacontract.org/2004/07/PortalManagement'
+      portal_xmlns = RubyCleverdome::Serialization.portal_management_schema
       list = Array.new
       resp_doc.xpath('//portal:PortalUser.UserEmail', 'portal'=> portal_xmlns).each do |ue|
         list.push(RubyCleverdome::UserEmail.from_xml ue)
@@ -94,7 +95,7 @@ module RubyCleverdome
     def service_call(method, locals)
       @userManagementClient.call(
           method,
-          :attributes => { 'xmlns' => 'http://tempuri.org/' },
+          :attributes => { 'xmlns' => RubyCleverdome::Serialization.user_management_namespace },
           message: locals
       )
     end

@@ -6,6 +6,7 @@ require 'mime/types'
 require 'ruby-cleverdome/multipart'
 require 'ruby-cleverdome/types'
 require 'ruby-cleverdome/config'
+require 'ruby-cleverdome/serialization'
 require 'base64'
 
 module RubyCleverdome
@@ -21,7 +22,7 @@ module RubyCleverdome
 			@auth_client = Savon.client(
 				wsdl: 'http://' + @config.authServicePath + '?wsdl',
 				endpoint: 'https://' + @config.authServicePath,
-				namespace: 'http://cleverdome.com/apikeys',
+				namespace: RubyCleverdome::Serialization.auth_namespace,
 				ssl_ca_cert_file: @cert,
 				#ssl_verify_mode: :none,
 				#proxy: 'http://127.0.0.1:8888',
@@ -32,7 +33,7 @@ module RubyCleverdome
 			@widgets_client = Savon.client(
 				wsdl: 'http://' + @config.widgetsServicePath + '?wsdl',
 				endpoint: 'https://' + @config.widgetsServicePath + '/basic',
-				namespace: 'http://tempuri.org/',
+				namespace: RubyCleverdome::Serialization.widgets_namespace,
 				ssl_ca_cert_file: @cert,
 				#ssl_verify_mode: :none,
 				#proxy: 'http://127.0.0.1:8888',
@@ -58,7 +59,7 @@ module RubyCleverdome
 		end
 
 		def widgets_call(method, locals)
-			call_widgets_with_attributes(method, locals, { 'xmlns' => 'http://tempuri.org/' })
+			call_widgets_with_attributes(method, locals, { 'xmlns' => RubyCleverdome::Serialization.widgets_namespace })
 		end
 
 	  	def operations
@@ -75,7 +76,7 @@ module RubyCleverdome
 	  		response = @widgets_client.call(
 	  			:upload_file,
 	  			:attributes => {
-	  				'xmlns' => 'http://tempuri.org/'
+	  				'xmlns' => RubyCleverdome::Serialization.widgets_namespace
 	  				},
 	  			message: {
 	  				inputStream: Base64.encode64(data)
@@ -93,7 +94,7 @@ module RubyCleverdome
 	  		response = @widgets_client.call(
 	  			:upload_file,
 	  			:attributes => {
-	  				'xmlns' => 'http://tempuri.org/'
+	  				'xmlns' => RubyCleverdome::Serialization.widgets_namespace
 	  				},
 	  			message: {
 	  				inputStream: Base64.encode64(data)
@@ -303,8 +304,8 @@ module RubyCleverdome
 	  				'securityGroupIDs' => {'a:int' => [group_id]},
 						'securityLevel' => security_level
   				}, {
-							'xmlns' => 'http://tempuri.org/',
-							'xmlns:a' => 'http://schemas.microsoft.com/2003/10/Serialization/Arrays'
+							'xmlns' => RubyCleverdome::Serialization.widgets_namespace,
+							'xmlns:a' => RubyCleverdome::Serialization.array_schema
 					}).doc
 
 	  		check_body(resp_doc)	  		
@@ -421,12 +422,40 @@ module RubyCleverdome
 			end
 
 			list
-	  	end
+			end
+
+			def delete_documents(session_id, doc_guids)
+				resp_doc = call_widgets_with_attributes(
+						:remove_documents,
+						{
+								'sessionID' => session_id,
+								'documentGuids' => RubyCleverdome::Serialization.format_request_array(doc_guids, 'a:guid')
+						}, {
+								'xmlns' => RubyCleverdome::Serialization.widgets_namespace,
+								'xmlns:a' => RubyCleverdome::Serialization.array_schema
+						}).doc
+
+				check_body(resp_doc)
+			end
+
+			def restore_documents(session_id, doc_guids)
+				resp_doc = call_widgets_with_attributes(
+						:repair_removed_documents,
+						{
+								'sessionID' => session_id,
+								'documentGuids' => RubyCleverdome::Serialization.format_request_array(doc_guids, 'a:guid')
+						}, {
+								'xmlns' => RubyCleverdome::Serialization.widgets_namespace,
+								'xmlns:a' => RubyCleverdome::Serialization.array_schema
+						}).doc
+
+				check_body(resp_doc)
+			end
 
 	  	def auth_call(api_key, user_id)
 				response = @auth_client.call(
 						:auth,
-						:attributes => { 'xmlns' => 'http://cleverdome.com/apikeys' },
+						:attributes => { 'xmlns' => RubyCleverdome::Serialization.auth_namespace },
 						message: {
 								'ApiKey' => api_key,
 								'UserID' => user_id

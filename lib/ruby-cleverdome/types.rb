@@ -1,3 +1,5 @@
+require 'ruby-cleverdome/serialization'
+
 module RubyCleverdome
 	class SecurityGroup
 		def self.from_xml sg
@@ -33,8 +35,8 @@ module RubyCleverdome
 	class UserData
 		def self.from_xml ud
 			UserData.new({
-				'id' => ud.at('ID'),
-				'full_name' => ud.at('FullName')})
+				'id' => ud.at('ID').content,
+				'full_name' => ud.at('FullName').content})
 		end
 
 		def initialize params = {}
@@ -51,8 +53,9 @@ module RubyCleverdome
 	class SecurityGroupType
 		def self.from_xml sgt
 			SecurityGroupType.new({
-				'id' => sgt.at('ID'),
-				'name' => sgt.at('Name')})
+				'id' => sgt.at('ID').content,
+				'name' => sgt.at('Name').content
+			})
 		end
 
 		def initialize params = {}
@@ -69,10 +72,10 @@ module RubyCleverdome
 	class MetadataValue
 		def self.from_xml dmv
 			MetadataValue.new({
-				'type_id' => dmv.at('FieldID'),
-				'type_name' => dmv.at('FieldName'),
-				'value_id' => dmv.at('FieldValueID'),
-				'value' => dmv.at('FieldValue')
+				'type_id' => dmv.at('FieldID').content,
+				'type_name' => dmv.at('FieldName').content,
+				'value_id' => dmv.at('FieldValueID').content,
+				'value' => dmv.at('FieldValue').content
 			})
 		end
 
@@ -100,7 +103,7 @@ module RubyCleverdome
 
   class UserEmail
 		def self.from_xml ue
-			portal_xmlns = 'http://schemas.datacontract.org/2004/07/PortalManagement'
+			portal_xmlns = RubyCleverdome::Serialization.portal_management_schema
 			email = UserEmail.new({
 
 				'id' => ue.at('./portal:ID', 'portal'=> portal_xmlns).content,

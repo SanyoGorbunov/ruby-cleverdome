@@ -64,6 +64,8 @@ class WelcomeController < ApplicationController
 
 		test_security_groups(widgets_client, user_management_client, config, doc_guid)
 
+		test_deleting_document(widgets_client, doc_guid)
+
 		render text: @output
 	end
 
@@ -213,4 +215,14 @@ class WelcomeController < ApplicationController
 		log('security groups on the document: ' + security_groups.inspect)
 	end
 
+	def test_deleting_document(widgets_client, doc_guid)
+		widgets_client.delete_documents(@session_id, [doc_guid])
+		log('<br/>deleted document %s' % doc_guid)
+
+		widgets_client.restore_documents(@session_id, [doc_guid])
+		log('restored document %s' % doc_guid)
+
+		widgets_client.delete_documents(@session_id, [doc_guid])
+		log('deleted document %s' % doc_guid)
+	end
 end

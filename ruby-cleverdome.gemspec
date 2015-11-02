@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.email       = 'sanyo.gorbunov@gmail.com'
   s.files       = ["lib/ruby-cleverdome.rb", "lib/ruby-cleverdome/multipart.rb", "lib/ruby-cleverdome/types.rb",
                    "lib/ruby-cleverdome/config.rb", "lib/ruby-cleverdome/user-management.rb" ,
-                   "lib/ruby-cleverdome/constants.rb"]
+                   "lib/ruby-cleverdome/constants.rb", "lib/ruby-cleverdome/serialization.rb"]
   s.homepage    =
     'https://github.com/SanyoGorbunov/ruby-cleverdome/'
 
