@@ -2,15 +2,21 @@ module RubyCleverdome
 	class SecurityGroup
 		def self.from_xml sg
 			SecurityGroup.new({
-				'id' => sg.at('ID'),
-				'name' => sg.at('Name'),
-				'read_only' => sg.at('ReadOnly'),
-				'type_id' => sg.at('TypeID'),
-				'type_name' => sg.at('TypeName')})
+				'id' => sg.at('ID').content,
+				'name' => sg.at('Name').content,
+				'read_only' => sg.at('ReadOnly').content,
+				'type_id' => sg.at('TypeID').content,
+				'type_name' => sg.at('TypeName').content
+			})
 		end
 
 		def initialize params = {}
     		params.each { |key, value| send "#{key}=", value }
+		end
+
+		def inspect
+			'{id => %s, name => %s, read_only => %s, type_id => %s, type_name => %s, }' %
+					[@id, @name, @read_only, @type_id, @type_name]
 		end
 
 		attr_accessor :id, :name, :read_only, :type_id, :type_name
@@ -35,6 +41,10 @@ module RubyCleverdome
     		params.each { |key, value| send "#{key}=", value }
 		end
 
+		def inspect
+			'{id => %s, full_name => %s}' % [@id, @full_name]
+		end
+
 		attr_accessor :id, :full_name		
 	end
 
@@ -49,6 +59,10 @@ module RubyCleverdome
     		params.each { |key, value| send "#{key}=", value }
 		end
 
+		def inspect
+			'{id => %s, name => %s}' % [@id, @name]
+		end
+
 		attr_accessor :id, :name		
 	end
 
@@ -60,10 +74,10 @@ module RubyCleverdome
 		attr_accessor :id, :first_name, :last_name, :primary_email, :phone_number
 	end
 
-  class User_Email
+  class UserEmail
 		def self.from_xml ue
 			portal_xmlns = 'http://schemas.datacontract.org/2004/07/PortalManagement'
-			email = User_Email.new({
+			email = UserEmail.new({
 				'id' => ue.at('./portal:ID', 'portal'=> portal_xmlns).content,
 				'email' => ue.at('./portal:Email', 'portal'=> portal_xmlns).content,
 				'active' => ue.at('./portal:Active', 'portal'=> portal_xmlns).content,
@@ -76,7 +90,7 @@ module RubyCleverdome
 		end
 
 		def inspect
-			'{id: %s, email: %s, active: %s, is_primary: %s}' % [@id, @email, @active, @is_primary]
+			'{id => %s, email => %s, active => %s, is_primary => %s}' % [@id, @email, @active, @is_primary]
 		end
 
 		attr_accessor :active, :email, :id, :is_primary
