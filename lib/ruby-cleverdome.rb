@@ -416,9 +416,9 @@ module RubyCleverdome
 
 	  		check_body(resp_doc)
 
-			list = Array.new
-			resp_doc.xpath('//ReturnValue/SecurityGroupType').each do |sgt|
-				list.push(RubyCleverdome::SecurityGroupType.from_xml sgt)
+				list = Array.new
+				resp_doc.xpath('//ReturnValue/SecurityGroupType').each do |sgt|
+					list.push(RubyCleverdome::SecurityGroupType.from_xml sgt)
 			end
 
 			list
@@ -428,11 +428,11 @@ module RubyCleverdome
 				resp_doc = call_widgets_with_attributes(
 						:remove_documents,
 						{
-								'sessionID' => session_id,
-								'documentGuids' => RubyCleverdome::Serialization.format_request_array(doc_guids, 'a:guid')
+							'sessionID' => session_id,
+							'documentGuids' => RubyCleverdome::Serialization.format_request_array(doc_guids, 'a:guid')
 						}, {
-								'xmlns' => RubyCleverdome::Serialization.widgets_namespace,
-								'xmlns:a' => RubyCleverdome::Serialization.array_schema
+							'xmlns' => RubyCleverdome::Serialization.widgets_namespace,
+							'xmlns:a' => RubyCleverdome::Serialization.array_schema
 						}).doc
 
 				check_body(resp_doc)
@@ -442,27 +442,63 @@ module RubyCleverdome
 				resp_doc = call_widgets_with_attributes(
 						:repair_removed_documents,
 						{
-								'sessionID' => session_id,
-								'documentGuids' => RubyCleverdome::Serialization.format_request_array(doc_guids, 'a:guid')
+							'sessionID' => session_id,
+							'documentGuids' => RubyCleverdome::Serialization.format_request_array(doc_guids, 'a:guid')
 						}, {
-								'xmlns' => RubyCleverdome::Serialization.widgets_namespace,
-								'xmlns:a' => RubyCleverdome::Serialization.array_schema
+							'xmlns' => RubyCleverdome::Serialization.widgets_namespace,
+							'xmlns:a' => RubyCleverdome::Serialization.array_schema
 						}).doc
 
 				check_body(resp_doc)
 			end
 
+			def get_documents_archive_info(session_id, doc_guids)
+				resp_doc = call_widgets_with_attributes(
+					:get_archive_info_for_document,
+					{
+						'sessionID' => session_id,
+						'documentGuids' => RubyCleverdome::Serialization.format_request_array(doc_guids, 'a:guid')
+					}, {
+						'xmlns' => RubyCleverdome::Serialization.widgets_namespace,
+						'xmlns:a' => RubyCleverdome::Serialization.array_schema
+					}).doc
+
+				check_body(resp_doc)
+
+				list = Array.new
+				resp_doc.xpath('//ReturnValue/DocumentRevisionArchiveInfo').each do |raf|
+					list.push(RubyCleverdome::ArchiveInfo.from_xml raf)
+				end
+
+				list
+			end
+
+			def archive_documents(session_id, doc_guids, retention_days)
+				resp_doc = call_widgets_with_attributes(
+					:archive_documents,
+					{
+						'sessionID' => session_id,
+						'documentGuids' => RubyCleverdome::Serialization.format_request_array(doc_guids, 'a:guid'),
+						'daysAmount' => retention_days
+					}, {
+						'xmlns' => RubyCleverdome::Serialization.widgets_namespace,
+						'xmlns:a' => RubyCleverdome::Serialization.array_schema
+					}).doc
+
+				check_body(resp_doc)
+				resp_doc.xpath('//ReturnValue')[0].content
+			end
+
 	  	def auth_call(api_key, user_id)
 				response = @auth_client.call(
-						:auth,
-						:attributes => { 'xmlns' => RubyCleverdome::Serialization.auth_namespace },
-						message: {
-								'ApiKey' => api_key,
-								'UserID' => user_id
-								#'IpAddresses'
-						}
+					:auth,
+					:attributes => { 'xmlns' => RubyCleverdome::Serialization.auth_namespace },
+					message: {
+							'ApiKey' => api_key,
+							'UserID' => user_id
+							#'IpAddresses'
+					}
 				)
-
 	  	end
 
 	  	def check_resp(resp_doc)

@@ -12,10 +12,6 @@ module CleverDomeConfiguration
       'sandbox.cleverdome.com/CDWidgets/Services/VendorUserManagement.svc'
     end
 
-    def userManagementServicePath
-      'sandbox.cleverdome.com/CDWidgets/Services/VendorUserManagement.svc'
-    end
-
     def cleverDomeCertFile
       '../../cert/CleverDomePublic.pem'
     end
@@ -30,6 +26,14 @@ module CleverDomeConfiguration
 
     def testUserID
       'Test.Jaccomo'
+    end
+
+    def archiving_days
+      7
+    end
+
+    def archive_document
+      false
     end
   end
 end

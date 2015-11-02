@@ -64,7 +64,12 @@ class WelcomeController < ApplicationController
 
 		test_security_groups(widgets_client, user_management_client, config, doc_guid)
 
-		test_deleting_document(widgets_client, doc_guid)
+
+		if config.archive_document
+			test_archiving(widgets_client, config, doc_guid)
+		else
+			test_deleting_document(widgets_client, doc_guid)
+		end
 
 		render text: @output
 	end
@@ -224,5 +229,17 @@ class WelcomeController < ApplicationController
 
 		widgets_client.delete_documents(@session_id, [doc_guid])
 		log('deleted document %s' % doc_guid)
+	end
+
+	def test_archiving(widgets_client, config, doc_guid)
+		log('<br/>start testing archiving')
+		archive_info = widgets_client.get_documents_archive_info(@session_id, [doc_guid])
+		log('archive info for document: ' + archive_info.inspect)
+
+		archived_till = widgets_client.archive_documents(@session_id, [doc_guid], config.archiving_days)
+		log('archived document for %s days. Archived till %s' % [config.archiving_days, archived_till])
+
+		archive_info = widgets_client.get_documents_archive_info(@session_id, [doc_guid])
+		log('archive info for document: ' + archive_info.inspect)
 	end
 end

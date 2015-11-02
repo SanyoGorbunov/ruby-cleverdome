@@ -79,17 +79,37 @@ module RubyCleverdome
 			})
 		end
 
-			def initialize params = {}
-				params.each { |key, value| send "#{key}=", value }
-			end
-
-			def inspect
-				'{type_id=> %s, type_name=> %s, value_id=> %s, value=> %s}' % [type_id, type_name, value_id, value ]
-			end
-
-			attr_accessor :type_id, :type_name, :value_id, :value
+		def initialize params = {}
+			params.each { |key, value| send "#{key}=", value }
 		end
 
+		def inspect
+			'{type_id=> %s, type_name=> %s, value_id=> %s, value=> %s}' % [type_id, type_name, value_id, value ]
+		end
+
+		attr_accessor :type_id, :type_name, :value_id, :value
+	end
+
+	class ArchiveInfo
+		def self.from_xml ai
+			ArchiveInfo.new({
+				'revision_number' => ai.at('RevisionNumber').content,
+				'revision_guid' => ai.at('RevisionGuid').content,
+				'archived_till' => ai.at('ArchivedTill').content
+			})
+		end
+
+		def initialize params = {}
+			params.each { |key, value| send "#{key}=", value }
+		end
+
+		def inspect
+			'{revision_number => %s, revision_guid => %s, archived_till => %s}' %
+					[@revision_number, @revision_guid, @archived_till]
+		end
+
+		attr_accessor :revision_number, :revision_guid, :archived_till
+	end
 
   class ExternalUser
 		def initialize params = {}
