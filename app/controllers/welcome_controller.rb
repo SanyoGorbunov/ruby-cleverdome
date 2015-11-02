@@ -18,10 +18,6 @@ class WelcomeController < ApplicationController
 		doc_guid = upload_file(widgets_client, config)
 		add_tags(widgets_client, doc_guid)
 
-		list = widgets_client.get_security_group_types(@session_id)
-
-		log('security group types retrieved: ' + list[1].name)
-
 		user_management_client = RubyCleverdome::UserManagementClient.new(config)
 
 		test_user_management(user_management_client)
@@ -37,7 +33,7 @@ class WelcomeController < ApplicationController
 		File.open(file_path, 'rb') { |file| content = file.read }
 
 		doc_guid = client.upload_file_binary(@session_id, config.applicationID, 'TestFile.jpeg', content)
-		log('document uploaded: ' + doc_guid)
+		log('<br/>document uploaded: ' + doc_guid)
 
 		doc_guid
 	end
@@ -57,7 +53,7 @@ class WelcomeController < ApplicationController
 	end
 
 	def test_user_management(client)
-		log('start testing user management')
+		log('<br/>start testing user management')
 		uuid = '2328ec50-190d-46c4-b57c-cda34bc8a26a' #SecureRandom.uuid
 		@created_external_user_id = 'RubyTestUser' + uuid
 		test_creating_user(client, @created_external_user_id)
@@ -117,7 +113,7 @@ class WelcomeController < ApplicationController
 		group_type_id = RubyCleverdome::Constants.security_group_types[:owner]
 		security_group = widgets_client.create_security_group(@session_id, 'RubyTest', 'RubyTestGroup' + SecureRandom.uuid,
 			group_type_id, cleverdome_user_id, config.applicationID)
-		log('created security group: %s' % security_group)
+		log('<br/>created security group: %s' % security_group.inspect)
 
 		security_group.id
 	end
@@ -143,6 +139,7 @@ class WelcomeController < ApplicationController
 	end
 
 	def test_document_security_groups(widgets_client, doc_guid, security_group_id)
+		log('<br/>start testing security groups on the document')
 		list_security_groups_on_document(widgets_client, doc_guid)
 
 		security_level = RubyCleverdome::Constants.security_levels[:modify]
