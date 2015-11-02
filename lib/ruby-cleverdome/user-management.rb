@@ -13,8 +13,8 @@ module RubyCleverdome
       @cert = File.expand_path(@config.cleverDomeCertFile, __FILE__)
 
       @userManagementClient = Savon.client(
-        wsdl: 'http://' + @config.userManagementServicePath + '?wsdl',
-        endpoint: 'https://' + @config.userManagementServicePath,
+        wsdl: 'http://' + @config.user_management_service_path + '?wsdl',
+        endpoint: 'https://' + @config.user_management_service_path,
         ssl_ca_cert_file: @cert,
         #ssl_verify_mode: :none,
         #proxy: 'http://127.0.0.1:8888'
@@ -23,7 +23,7 @@ module RubyCleverdome
 
     def create_user(external_user)
       response = service_call(:create_user, {
-         'apiKey' => @config.apiKey,
+         'apiKey' => @config.api_key,
          'externalUserID' => external_user.id,
          'firstName' => external_user.first_name,
          'lastName' => external_user.last_name,
@@ -36,14 +36,14 @@ module RubyCleverdome
 
     def delete_user(external_user_id)
       service_call(:delete_user, {
-         'apiKey' => @config.apiKey,
+         'apiKey' => @config.api_key,
          'externalUserID' => external_user.id
        })
     end
 
     def get_user_emails(external_user_id)
       resp_doc = service_call(:get_user_emails, {
-        'apiKey' => @config.apiKey,
+        'apiKey' => @config.api_key,
         'externalUserID' => external_user_id
       }).doc
 
@@ -58,7 +58,7 @@ module RubyCleverdome
 
     def add_user_email(external_user_id, email, is_primary)
       response = service_call(:add_user_email, {
-        'apiKey' => @config.apiKey,
+        'apiKey' => @config.api_key,
         'externalUserID' => external_user_id,
         'email' => email,
         'isPrimary' => is_primary
@@ -69,7 +69,7 @@ module RubyCleverdome
 
     def set_user_primary_email(external_user_id, email_id)
       service_call(:set_user_primary_email, {
-        'apiKey' => @config.apiKey,
+        'apiKey' => @config.api_key,
         'externalUserID' => external_user_id,
         'emailID' => email_id,
       })
@@ -77,7 +77,7 @@ module RubyCleverdome
 
     def remove_user_email(external_user_id, email_id)
       service_call(:remove_user_email, {
-        'apiKey' => @config.apiKey,
+        'apiKey' => @config.api_key,
         'externalUserID' => external_user_id,
         'emailID' => email_id,
       })
@@ -85,7 +85,7 @@ module RubyCleverdome
 
     def get_cleverdome_user_id(external_user_id)
       response = service_call(:get_clever_dome_user_id, {
-         'apiKey' => @config.apiKey,
+         'apiKey' => @config.api_key,
          'externalUserID' => external_user_id
        }).to_hash
 

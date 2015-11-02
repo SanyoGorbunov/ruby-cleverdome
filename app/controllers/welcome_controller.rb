@@ -11,8 +11,8 @@ class WelcomeController < ApplicationController
 		config = CleverDomeConfiguration::CDConfig.new()
 		widgets_client = RubyCleverdome::Client.new(config)
 
-		api_key = config.apiKey
-		user_id = config.testUserID
+		api_key = config.api_key
+		user_id = config.test_user_id
 
 		@session_id = widgets_client.auth(api_key, user_id)
 		log('session_id retrieved: ' + @session_id)
@@ -44,7 +44,7 @@ class WelcomeController < ApplicationController
 		content = ''
 		File.open(file_path, 'rb') { |file| content = file.read }
 
-		doc_guid = client.upload_file_binary(@session_id, config.applicationID, 'TestFile.jpeg', content)
+		doc_guid = client.upload_file_binary(@session_id, config.application_id, 'TestFile.jpeg', content)
 		log('<br/>document uploaded: ' + doc_guid)
 
 		doc_guid
@@ -92,7 +92,7 @@ class WelcomeController < ApplicationController
 
 	def test_template(client, doc_guid, config)
 		log('<br/>start testing template')
-		app_ID = config.applicationID
+		app_ID = config.application_id
 		template = client.get_templates(@session_id, app_ID)
 		log('app template: ' +template.inspect)
 
@@ -160,9 +160,9 @@ class WelcomeController < ApplicationController
 	end
 
 	def test_security_groups(widgets_client, user_management_client, config, doc_guid)
-		test_cleverdome_user_id = user_management_client.get_cleverdome_user_id(config.testUserID)
+		test_cleverdome_user_id = user_management_client.get_cleverdome_user_id(config.test_user_id)
 		log('get cleverdome user ID by external user ID: external_user_id = %s, internal_user_id = %s' %
-			[test_cleverdome_user_id, config.testUserID])
+			[test_cleverdome_user_id, config.test_user_id])
 
 		security_group_id = test_creating_security_group(widgets_client, config, test_cleverdome_user_id)
 		test_security_group_membership(widgets_client, user_management_client, security_group_id)
@@ -176,7 +176,7 @@ class WelcomeController < ApplicationController
 
 		group_type_id = RubyCleverdome::Constants.security_group_types[:owner]
 		security_group = widgets_client.create_security_group(@session_id, 'RubyTest', 'RubyTestGroup' + SecureRandom.uuid,
-			group_type_id, cleverdome_user_id, config.applicationID)
+			group_type_id, cleverdome_user_id, config.application_id)
 		log('<br/>created security group: %s' % security_group.inspect)
 
 		security_group.id
