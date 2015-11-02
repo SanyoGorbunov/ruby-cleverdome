@@ -12,6 +12,10 @@ module CleverDomeConfiguration
       'sandbox.cleverdome.com/CDWidgets/Services/VendorUserManagement.svc'
     end
 
+    def userManagementServicePath
+      'sandbox.cleverdome.com/CDWidgets/Services/VendorUserManagement.svc'
+    end
+
     def cleverDomeCertFile
       '../../cert/CleverDomePublic.pem'
     end

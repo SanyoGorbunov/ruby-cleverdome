@@ -49,13 +49,17 @@ module RubyCleverdome
 			responseMessage[:session_id]
 		end
 
+		def call_widgets_with_attributes(method, locals, attributes)
+			response = @widgets_client.call(
+					method,
+					:attributes => attributes,
+					message: locals
+			)
+		end
+
 		def widgets_call(method, locals)
-	  		response = @widgets_client.call(
-				method,
-				:attributes => { 'xmlns' => 'http://tempuri.org/' },
-				message: locals
-				)
-	  	end
+			call_widgets_with_attributes(method, locals, { 'xmlns' => 'http://tempuri.org/' })
+		end
 
 	  	def operations
 	  		@widgets_client.operations
@@ -272,7 +276,7 @@ module RubyCleverdome
 				check_body(resp_doc)
 			end
 
-	  	def get_security_groups(session_id, doc_guid)
+	  	def get_document_security_groups(session_id, doc_guid)
 	  		resp_doc = widgets_call(
 	  			:get_security_groups,
 	  			{
@@ -282,12 +286,12 @@ module RubyCleverdome
 
 	  		check_body(resp_doc)
 
-			list = Array.new
-			resp_doc.xpath('//ReturnValue/SecurityGroup').each do |sg|
-				list.push(RubyCleverdome::SecurityGroup.from_xml sg)
-			end
+			  list = Array.new
+			  resp_doc.xpath('//SecurityGroup').each do |sg|
+					list.push(RubyCleverdome::SecurityGroup.from_xml sg)
+				end
 
-			list
+				list
 	  	end
 
 	  	def get_group_permissions(sesson_id, doc_guid, group_id)
@@ -310,26 +314,41 @@ module RubyCleverdome
 			end
 
 			list
-	  	end
+			end
 
-	  	def append_security_group(session_id, doc_guid, group_id)
-	  		resp_doc = widgets_call(
-	  			:append_security_group_to_document,
+	  	def attach_security_group_to_document(session_id, doc_guid, group_id, security_level)
+	  		resp_doc = call_widgets_with_attributes(
+	  			:attach_security_groups_to_document,
 	  			{
 	  				'sessionID' => session_id,
-	  				'groupID' => group_id,
-	  				'documentGuid' => doc_guid
-  				}).doc
+						'documentGuid' => doc_guid,
+	  				'securityGroupIDs' => {'a:int' => [group_id]},
+						'securityLevel' => security_level
+  				}, {
+							'xmlns' => 'http://tempuri.org/',
+							'xmlns:a' => 'http://schemas.microsoft.com/2003/10/Serialization/Arrays'
+					}).doc
 
 	  		check_body(resp_doc)	  		
-	  	end
+			end
 
-	  	def remove_security_group(session_id, doc_guid, group_id)
+			def remove_security_group_from_document(session_id, doc_guid, group_id)
+				resp_doc = widgets_call(
+						:remove_security_group_from_document,
+						{
+								'sessionID' => session_id,
+								'documentGuid' => doc_guid,
+								'securityGroupID' => group_id
+						}).doc
+
+				check_body(resp_doc)
+			end
+
+	  	def remove_security_group(session_id, group_id)
 	  		resp_doc = widgets_call(
-	  			:remove_security_group_from_document,
+	  			:remove_security_group,
 	  			{
 	  				'sessionID' => session_id,
-	  				'documentGuid' => doc_guid,
 	  				'securityGroupID' => group_id
   				}).doc
 
@@ -341,7 +360,7 @@ module RubyCleverdome
 	  			:set_permission_for_group,
 	  			{
 	  				'sessionID' => session_id,
-					'groupID' => group_id,
+						'groupID' => group_id,
 	  				'permissionID' => permission_id,
 	  				'permissionValue' => permission_value,
 	  				'documentGuid' => doc_guid
@@ -374,7 +393,7 @@ module RubyCleverdome
 	  		check_body(resp_doc)
 	  	end
 
-	  	def create_security_group(session_id, name, desc, type_id, owner_id)
+	  	def create_security_group(session_id, name, desc, type_id, owner_user_id, application_id)
 	  		resp_doc = widgets_call(
 	  			:create_security_group,
 	  			{
@@ -382,12 +401,13 @@ module RubyCleverdome
 	  				'name' => name,
 	  				'description' => desc,
 	  				'type' => type_id,
-	  				'ownerID' => owner_id
+	  				'ownerID' => owner_user_id,
+						'templateApplicationID' => application_id
   				}).doc
 
 	  		check_body(resp_doc)
 
-	  		RubyCleverdome::SecurityGroup.from_xml resp_doc.xpath('//ReturnValue/SecurityGroup')  		
+	  		RubyCleverdome::SecurityGroup.from_xml resp_doc.xpath('//ReturnValue')
 	  	end
 
 	  	def get_security_group_users(session_id, group_id)
@@ -400,8 +420,8 @@ module RubyCleverdome
 
 	  		check_body(resp_doc)
 
-			list = Array.new
-			resp_doc.xpath('//ReturnValue/UserData').each do |ud|
+			  list = Array.new
+			  resp_doc.xpath('//ReturnValue/UserData').each do |ud|
 				list.push(RubyCleverdome::UserData.from_xml ud)
 			end
 
