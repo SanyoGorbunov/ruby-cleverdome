@@ -13,7 +13,7 @@ module CleverDomeConfiguration
     end
 
     def cleverDomeCertFile
-      '../../cert/CleverDomePublic.pem'
+      File.expand_path('../../../cert/CleverDomePublic.pem', __FILE__)
     end
 
     def applicationID
@@ -34,6 +34,11 @@ module CleverDomeConfiguration
 
     def archive_document
       false
+    end
+
+    #our services are ip-protected. Please specify IP-addressed from which users are permitted to use the session
+    def test_ip_addresses
+      ['127.0.0.1', '127.0.0.2', '192.168.0.*']
     end
   end
 end

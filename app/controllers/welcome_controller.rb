@@ -3,7 +3,6 @@ require 'ruby-cleverdome/types'
 require 'ruby-cleverdome/user-management'
 require 'ruby-cleverdome/constants'
 
-
 class WelcomeController < ApplicationController
 	def index
 		@output = ''
@@ -14,21 +13,17 @@ class WelcomeController < ApplicationController
 		api_key = config.apiKey
 		user_id = config.testUserID
 
-		@session_id = widgets_client.auth(api_key, user_id)
+		@session_id = widgets_client.auth(api_key, user_id, config.test_ip_addresses)
 		log('session_id retrieved: ' + @session_id)
 
 		doc_guid = upload_file(widgets_client, config)
-
 		test_template(widgets_client, doc_guid, config)
-
 		test_metadata(widgets_client, doc_guid)
 
 		user_management_client = RubyCleverdome::UserManagementClient.new(config)
-
 		test_user_management(user_management_client)
-
 		test_security_groups(widgets_client, user_management_client, config, doc_guid)
-
+		delete_test_user(user_management_client)
 
 		if config.archive_document
 			test_archiving(widgets_client, config, doc_guid)
@@ -247,5 +242,9 @@ class WelcomeController < ApplicationController
 
 		archive_info = widgets_client.get_documents_archive_info(@session_id, [doc_guid])
 		log('archive info for document: ' + archive_info.inspect)
+	end
+
+	def delete_test_user(user_management_client)
+		user_management_client.delete_user(@created_external_user_id)
 	end
 end

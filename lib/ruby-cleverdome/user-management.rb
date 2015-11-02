@@ -10,7 +10,7 @@ module RubyCleverdome
   class UserManagementClient
     def initialize(config)
       @config = config
-      @cert = File.expand_path(@config.cleverDomeCertFile, __FILE__)
+      @cert = @config.cleverDomeCertFile
 
       @userManagementClient = Savon.client(
         wsdl: 'http://' + @config.userManagementServicePath + '?wsdl',
@@ -37,7 +37,7 @@ module RubyCleverdome
     def delete_user(external_user_id)
       service_call(:delete_user, {
          'apiKey' => @config.apiKey,
-         'externalUserID' => external_user.id
+         'externalUserID' => external_user_id
        })
     end
 
