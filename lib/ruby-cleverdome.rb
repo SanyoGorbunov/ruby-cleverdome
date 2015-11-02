@@ -294,28 +294,6 @@ module RubyCleverdome
 				list
 	  	end
 
-	  	def get_group_permissions(sesson_id, doc_guid, group_id)
-	  		resp_doc = widgets_call(
-	  			:get_group_permissions,
-	  			{
-	  				'sessionID' => session_id,
-	  				'groupID' => group_id,
-	  				'documentGuid' => doc_guid
-  				}).doc
-
-	  		check_body(resp_doc)
-
-			list = Array.new
-			resp_doc.xpath('//ReturnValue/PermissionData').each do |sg|
-				list.push(RubyCleverdome::PermissionData.new({
-					'id' => sg.at('ID'),
-					'name' => sg.at('Name'),
-					'allowed' => sg.at('Allowed')}))
-			end
-
-			list
-			end
-
 	  	def attach_security_group_to_document(session_id, doc_guid, group_id, security_level)
 	  		resp_doc = call_widgets_with_attributes(
 	  			:attach_security_groups_to_document,
