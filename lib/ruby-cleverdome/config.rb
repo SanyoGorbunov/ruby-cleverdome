@@ -1,11 +1,11 @@
 module CleverDomeConfiguration
   class CDConfig
     def authServicePath
-      'sandbox.cleverdome.com/CDSSOService/ApiKeyService.svc'
+      'dev.cleverdome.com/CDSSOService/ApiKeyService.svc'
     end
 
     def widgetsServicePath
-      'sandbox.cleverdome.com/CDWidgets/Services/Widgets.svc'
+      'dev.cleverdome.com/CDWidgets/Services/Widgets.svc'
     end
 
     def cleverDomeCertFile

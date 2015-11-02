@@ -51,4 +51,24 @@ module RubyCleverdome
 
 		attr_accessor :id, :name		
 	end
+
+	class MetadataValue
+		def self.from_xml dmv
+			MetadataValue.new({
+				'type_id' => dmv.at('FieldID'),
+				'type_name' => dmv.at('FieldName'),
+				'value_id' => dmv.at('FieldValueID'),
+				'value' => dmv.at('FieldValue')})
+		end
+
+		def initialize params = {}
+			params.each { |key, value| send "#{key}=", value }
+		end
+
+		def inspect
+			'{type_id=> %s, type_name=> %s, value_id=> %s, value=> %s}' % [type_id, type_name, value_id, value ]
+		end
+
+		attr_accessor :type_id, :type_name, :value_id, :value
+		end
 end

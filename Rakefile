@@ -3,4 +3,5 @@
 
 require File.expand_path('../config/application', __FILE__)
 
-RubyCleverdome::Application.load_tasks
+LOAD_TASKS = RubyCleverdome::Application.load_tasks
+LOAD_TASKS

@@ -34,7 +34,7 @@ module RubyCleverdome
 				endpoint: 'https://' + @config.widgetsServicePath + '/basic',
 				namespace: 'http://tempuri.org/',
 				ssl_ca_cert_file: @cert,
-				#ssl_verify_mode: :none
+				#ssl_verify_mode: :none,
 				#proxy: 'http://127.0.0.1:8888',
 			)
 		end
@@ -171,6 +171,7 @@ module RubyCleverdome
   				}).doc
 
 	  		check_body(resp_doc)
+
 	  	end
 
 	  	def get_document_tags(session_id, doc_guid)
@@ -213,7 +214,63 @@ module RubyCleverdome
 	  			}).doc
 
 	  		check_body(resp_doc)
-	  	end
+			end
+
+			def get_document_metadata(session_id, doc_guid)
+				resp_doc = widgets_call(
+				:get_document_metadata_base,
+						{
+								'sessionID' => session_id,
+								'documentGuid' => doc_guid
+						}).doc
+
+				check_body(resp_doc)
+
+				list = Array.new
+				resp_doc.xpath('//ReturnValue/DocumentMetadataValueBase').each do |dmv|
+					list.push(RubyCleverdome::MetadataValue.from_xml dmv)
+				end
+
+				list
+			end
+
+			def add_metadata(session_id, doc_guid, type_id, value)
+				resp_doc = widgets_call(
+						:add_document_field,
+						{
+								'sessionID' => session_id,
+								'documentGuid' => doc_guid,
+								'fieldID' => type_id,
+								'fieldValue' =>  value
+
+						}).doc
+				check_body(resp_doc)
+
+				return resp_doc.xpath('//ReturnValue')[0].content
+			end
+
+			def remove_metadata(session_id, doc_guid, value_id)
+				resp_doc = widgets_call(
+						:remove_document_field,
+						{
+								'sessionID' => session_id,
+								'documentGuid' => doc_guid,
+								'valueID' => value_id
+						}).doc
+				check_body(resp_doc)
+			end
+
+			def remove_metadata_by_value(session_id, doc_guid, type_id, value)
+				resp_doc = widgets_call(
+						:remove_document_field_by_value,
+						{
+								'sessionID' => session_id,
+								'documentGuid' => doc_guid,
+								'fieldTypeID' => type_id,
+								'fieldValue' => value
+						}).doc
+				check_body(resp_doc)
+			end
 
 	  	def get_security_groups(session_id, doc_guid)
 	  		resp_doc = widgets_call(
@@ -233,7 +290,7 @@ module RubyCleverdome
 			list
 	  	end
 
-	  	def get_group_permissions(session_id, doc_guid, group_id)
+	  	def get_group_permissions(sesson_id, doc_guid, group_id)
 	  		resp_doc = widgets_call(
 	  			:get_group_permissions,
 	  			{
