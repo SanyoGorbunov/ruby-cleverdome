@@ -21,5 +21,12 @@ module RubyCleverdome
         :custom => 4
       }
     end
+
+    def self.metadata_types
+      {
+          :file_name => 41,
+          :tag => 78
+      }
+    end
   end
 end

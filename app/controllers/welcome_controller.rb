@@ -14,49 +14,14 @@ class WelcomeController < ApplicationController
 		api_key = config.apiKey
 		user_id = config.testUserID
 
-		app_ID = config.applicationID
 		@session_id = widgets_client.auth(api_key, user_id)
 		log('session_id retrieved: ' + @session_id)
 
 		doc_guid = upload_file(widgets_client, config)
 
-		template = widgets_client.get_templates(@session_id, app_ID)
-		log('app template: ' +template.inspect)
+		test_template(widgets_client, doc_guid, config)
 
-		doc_template = widgets_client.get_document_template(@session_id, doc_guid)
-		log('document template: ' +doc_template.inspect)
-
-		template_types = widgets_client.get_template_types(@session_id, app_ID , template.keys.first)
-		log('template types: ' + template_types.inspect)
-
-		doc_type = widgets_client.get_document_type(@session_id, doc_guid)
-		log('document type: ' + doc_type.inspect)
-
-		setDoc =  widgets_client.set_document_template_type(@session_id, doc_guid, 0, 3 )
-		log('set document template type')
-
-		value_id = widgets_client.add_metadata(@session_id, doc_guid, 78, 'new metadata');
-		log('Add Metadata : "new metadata"')
-		widgets_client.add_metadata(@session_id, doc_guid, 78, 'NewMetadata');
-		log('Add Metadata : "NewMetadata"')
-		metadata = widgets_client.get_document_metadata(@session_id, doc_guid);
-		log('Document Metadata : ' + metadata.inspect)
-
-		widgets_client.remove_metadata(@session_id, doc_guid, value_id);
-		log('Remove metadata valueID'+  value_id)
-		widgets_client.remove_metadata_by_value(@session_id, doc_guid, 78,  'NewMetadata');
-		log('Remove metadata value: "NewMetadata"')
-
-		all_tags = widgets_client.get_document_tags(@session_id, doc_guid);
-		log('All tags : ' + all_tags.inspect)
-
-		tagID =  add_tags(widgets_client, doc_guid)
-		remove_tag(widgets_client,doc_guid, tagID)
-
-		list = widgets_client.get_security_group_types(@session_id)
-		log('security group types retrieved: ' + list.inspect)
-
-		add_tags(widgets_client, doc_guid)
+		test_metadata(widgets_client, doc_guid)
 
 		user_management_client = RubyCleverdome::UserManagementClient.new(config)
 
@@ -89,18 +54,59 @@ class WelcomeController < ApplicationController
 		client.add_document_tag(@session_id, doc_guid, 'Tag Text 1')
 		client.add_document_tag(@session_id, doc_guid, 'Tag Text 2')
 		client.add_document_tag(@session_id, doc_guid, 'Tag Text 3')
-		log('tags added')
+		log('Tags added')
 
 		hash_tags = client.get_document_tags(@session_id, doc_guid)
-		log('document tags: ' + hash_tags.inspect)
+		log('Document tags: ' + hash_tags.inspect)
 
 		hash_tags.keys.first
 	end
 
 	def remove_tag(client, doc_guid, tag_id)
 		client.remove_document_tag(@session_id, doc_guid, tag_id)
-		log('removed  tag: tagID = '+ tag_id.inspect)
+		log('Removed  tag: tagID = '+ tag_id.inspect)
 
+	end
+
+	def test_metadata(client, doc_guid)
+		log('<br/>start testing metadata')
+		metadata_type_id = RubyCleverdome::Constants.metadata_types[:tag];
+
+		value_id = client.add_metadata(@session_id, doc_guid, metadata_type_id, 'new metadata');
+		log('Add Metadata : "new metadata"')
+		client.add_metadata(@session_id, doc_guid, metadata_type_id, 'NewMetadata');
+		log('Add Metadata : "NewMetadata"')
+
+		metadata = client.get_document_metadata(@session_id, doc_guid);
+		log('All Document Metadata : ' + metadata.inspect)
+
+		client.remove_metadata(@session_id, doc_guid, value_id);
+		log('Remove metadata valueID'+  value_id)
+		client.remove_metadata_by_value(@session_id, doc_guid, metadata_type_id,  'NewMetadata');
+		log('Remove metadata value: "NewMetadata"')
+
+		tagID =  add_tags(client, doc_guid)
+		remove_tag(client,doc_guid, tagID)
+
+	end
+
+	def test_template(client, doc_guid, config)
+		log('<br/>start testing template')
+		app_ID = config.applicationID
+		template = client.get_templates(@session_id, app_ID)
+		log('app template: ' +template.inspect)
+
+		doc_template = client.get_document_template(@session_id, doc_guid)
+		log('document template: ' +doc_template.inspect)
+
+		template_types = client.get_template_types(@session_id, app_ID , template.keys.first)
+		log('template types: ' + template_types.inspect)
+
+		doc_type = client.get_document_type(@session_id, doc_guid)
+		log('document type: ' + doc_type.inspect)
+
+		setDoc =  client.set_document_template_type(@session_id, doc_guid, 0, 3 )
+		log('set document template type')
 	end
 
 	def log(text)
