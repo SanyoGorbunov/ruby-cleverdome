@@ -1,10 +1,8 @@
 require 'ruby-cleverdome'
 require 'ruby-cleverdome/types'
 require 'ruby-cleverdome/user-management'
-<<<<<<< HEAD
-=======
 require 'ruby-cleverdome/constants'
->>>>>>> origin/master
+
 
 class WelcomeController < ApplicationController
 	def index
@@ -15,7 +13,7 @@ class WelcomeController < ApplicationController
 
 		api_key = config.apiKey
 		user_id = config.testUserID
-<<<<<<< HEAD
+
 		app_ID = config.applicationID
 		@session_id = client.auth(api_key, user_id)
 		log('session_id retrieved: ' + @session_id)
@@ -67,7 +65,6 @@ class WelcomeController < ApplicationController
 
 		test_user_management(config)
 
-=======
 		@session_id = widgets_client.auth(api_key, user_id)
 		log('session_id retrieved: ' + @session_id)
 
@@ -80,7 +77,6 @@ class WelcomeController < ApplicationController
 
 		test_security_groups(widgets_client, user_management_client, config, doc_guid)
 
->>>>>>> origin/master
 		render text: @output
 	end
 
@@ -118,22 +114,14 @@ class WelcomeController < ApplicationController
 		@output += text + '<br/>'
 	end
 
-<<<<<<< HEAD
-	def test_user_management(config)
-		log('start testing user management')
-		uuid = SecureRandom.uuid
-		external_user_id = 'RubyTestUser' + uuid
-		client = RubyCleverdome::UserManagementClient.new(config)
-		test_creating_user(client, external_user_id)
-		test_email_management(client, external_user_id)
-=======
+
 	def test_user_management(client)
 		log('<br/>start testing user management')
-		uuid = '2328ec50-190d-46c4-b57c-cda34bc8a26a' #SecureRandom.uuid
+		uuid = SecureRandom.uuid
 		@created_external_user_id = 'RubyTestUser' + uuid
 		test_creating_user(client, @created_external_user_id)
-		#test_email_management(client, @created_external_user_id)
->>>>>>> origin/master
+		test_email_management(client, @created_external_user_id)
+
 	end
 
 	def test_creating_user(client, external_user_id)
@@ -145,11 +133,8 @@ class WelcomeController < ApplicationController
 				'phone_number' => '0000000000'
 		}))
 
-<<<<<<< HEAD
 		log('created user with cleverdome user id = ' + internal_user_id)
-=======
-		log('created user with cleverdome user id = ' +internal_user_id)
->>>>>>> origin/master
+
 	end
 
 	def test_email_management(client, external_user_id)
@@ -174,8 +159,6 @@ class WelcomeController < ApplicationController
 		emails = client.get_user_emails(external_user_id)
 		log('current user''s emails: ' + emails.inspect)
 	end
-<<<<<<< HEAD
-=======
 
 	def test_security_groups(widgets_client, user_management_client, config, doc_guid)
 		test_cleverdome_user_id = user_management_client.get_cleverdome_user_id(config.testUserID)
@@ -243,5 +226,5 @@ class WelcomeController < ApplicationController
 		security_groups = widgets_client.get_document_security_groups(@session_id, doc_guid)
 		log('security groups on the document: ' + security_groups.inspect)
 	end
->>>>>>> origin/master
+
 end

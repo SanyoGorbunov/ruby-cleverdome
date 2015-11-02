@@ -15,13 +15,8 @@ module RubyCleverdome
         wsdl: 'http://' + @config.userManagementServicePath + '?wsdl',
         endpoint: 'https://' + @config.userManagementServicePath,
         ssl_ca_cert_file: @cert,
-<<<<<<< HEAD
-        ssl_verify_mode: :none,
-        proxy: 'http://127.0.0.1:8888',
-=======
         #ssl_verify_mode: :none,
         #proxy: 'http://127.0.0.1:8888'
->>>>>>> origin/master
       )
     end
 
@@ -54,11 +49,7 @@ module RubyCleverdome
       portal_xmlns = 'http://schemas.datacontract.org/2004/07/PortalManagement'
       list = Array.new
       resp_doc.xpath('//portal:PortalUser.UserEmail', 'portal'=> portal_xmlns).each do |ue|
-<<<<<<< HEAD
-        list.push(RubyCleverdome::User_Email.from_xml ue)
-=======
         list.push(RubyCleverdome::UserEmail.from_xml ue)
->>>>>>> origin/master
       end
 
       list
@@ -91,8 +82,6 @@ module RubyCleverdome
       })
     end
 
-<<<<<<< HEAD
-=======
     def get_cleverdome_user_id(external_user_id)
       response = service_call(:get_clever_dome_user_id, {
          'apiKey' => @config.apiKey,
@@ -102,7 +91,6 @@ module RubyCleverdome
       response[:get_clever_dome_user_id_response][:get_clever_dome_user_id_result]
     end
 
->>>>>>> origin/master
     def service_call(method, locals)
       @userManagementClient.call(
           method,
