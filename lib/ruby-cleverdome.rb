@@ -13,15 +13,15 @@ module RubyCleverdome
 	class Client
 		def initialize(config)
 			@config = config
-			@cert = File.expand_path(@config.clever_dome_cert_file, __FILE__)
+			@cert = File.expand_path(@config.cleverDomeCertFile, __FILE__)
 			init_auth_client()
 			init_widgets_client()
 		end
 
 		def init_auth_client()
 			@auth_client = Savon.client(
-				wsdl: 'http://' + @config.auth_service_path + '?wsdl',
-				endpoint: 'https://' + @config.auth_service_path,
+				wsdl: 'http://' + @config.authServicePath + '?wsdl',
+				endpoint: 'https://' + @config.authServicePath,
 				namespace: RubyCleverdome::Serialization.auth_namespace,
 				ssl_ca_cert_file: @cert,
 				#ssl_verify_mode: :none,
@@ -31,8 +31,8 @@ module RubyCleverdome
 
 		def init_widgets_client()
 			@widgets_client = Savon.client(
-				wsdl: 'http://' + @config.widgets_service_path + '?wsdl',
-				endpoint: 'https://' + @config.widgets_service_path + '/basic',
+				wsdl: 'http://' + @config.widgetsServicePath + '?wsdl',
+				endpoint: 'https://' + @config.widgetsServicePath + '/basic',
 				namespace: RubyCleverdome::Serialization.widgets_namespace,
 				ssl_ca_cert_file: @cert,
 				#ssl_verify_mode: :none,
