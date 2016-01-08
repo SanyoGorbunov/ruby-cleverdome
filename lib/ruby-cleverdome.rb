@@ -13,7 +13,7 @@ module RubyCleverdome
 	class Client
 		def initialize(config)
 			@config = config
-			@cert = File.expand_path(@config.cleverDomeCertFile, __FILE__)
+			@cert = @config.cleverDomeCertFile
 			init_auth_client()
 			init_widgets_client()
 		end
@@ -40,8 +40,8 @@ module RubyCleverdome
 			)
 		end
 
-		def auth(api_key, user_id)
-			responseMessage = auth_call(api_key, user_id).to_hash[:api_key_response_message]
+		def auth(api_key, user_id, ip_addresses)
+			responseMessage = auth_call(api_key, user_id, ip_addresses).to_hash[:api_key_response_message]
 
 			if !responseMessage[:is_success]
 				raise responseMessage[:error_message]
@@ -489,14 +489,17 @@ module RubyCleverdome
 				resp_doc.xpath('//ReturnValue')[0].content
 			end
 
-	  	def auth_call(api_key, user_id)
+	  	def auth_call(api_key, user_id, ip_addresses)
 				response = @auth_client.call(
 					:auth,
-					:attributes => { 'xmlns' => RubyCleverdome::Serialization.auth_namespace },
+					:attributes => {
+							'xmlns' => RubyCleverdome::Serialization.auth_namespace,
+							'xmlns:a' => RubyCleverdome::Serialization.array_schema
+					},
 					message: {
 							'ApiKey' => api_key,
-							'UserID' => user_id
-							#'IpAddresses'
+							'UserID' => user_id,
+							'IpAddresses' => RubyCleverdome::Serialization.format_request_array(ip_addresses, 'a:string')
 					}
 				)
 	  	end
